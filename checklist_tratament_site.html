@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checklist Tratament</title>
+  <style>
+    :root {
+      --bg: #f7f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --blue: #dbeafe;
+      --green: #dcfce7;
+      --yellow: #fef3c7;
+      --orange: #ffedd5;
+      --shadow: 0 10px 28px rgba(31, 41, 55, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 26px; margin: 8px 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+    .top {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .day-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .day-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 4px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .day-btn.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+    .section {
+      margin: 14px 0;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-title {
+      padding: 12px 14px;
+      font-weight: 800;
+      background: #111827;
+      color: #fff;
+      letter-spacing: .2px;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      min-height: 56px;
+    }
+    .item:last-child { border-bottom: 0; }
+    .item.disabled {
+      opacity: .35;
+      background: #f3f4f6;
+    }
+    input[type="checkbox"] {
+      width: 26px;
+      height: 26px;
+      accent-color: #111827;
+      flex: 0 0 auto;
+    }
+    .name { font-size: 17px; font-weight: 700; }
+    .pill {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: #374151;
+      white-space: nowrap;
+    }
+    .d10 { background: var(--blue); }
+    .d7 { background: var(--green); }
+    .d5 { background: var(--yellow); }
+    .d3 { background: var(--orange); }
+    .done .name { text-decoration: line-through; color: var(--muted); }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button.action {
+      flex: 1;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .reset { background: #fee2e2; color: #991b1b; }
+    .copy { background: #e0e7ff; color: #3730a3; }
+    .progress {
+      margin-top: 10px;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar { height: 100%; width: 0%; background: #111827; transition: width .2s; }
+    .small { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Checklist tratament</h1>
+      <p class="sub">Alege ziua și bifează ce ai luat. Bifele rămân salvate pe telefon.</p>
+      <div class="day-tabs" id="days"></div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="small" id="progressText"></div>
+      <div class="actions">
+        <button class="action copy" onclick="copyStatus()">Copiază status</button>
+        <button class="action reset" onclick="resetDay()">Resetează ziua</button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+<script>
+const treatment = [
+  { section: "10:30", items: [
+    { name: "Augmentin", days: 10 }
+  ]},
+  { section: "Dimineața", items: [
+    { name: "Vitamina C", days: 10 },
+    { name: "Biofen", days: 3 },
+    { name: "Sinupret", days: 7 },
+    { name: "Strepsils", days: 5 },
+    { name: "Biseptol spray", days: 5 }
+  ]},
+  { section: "Prânz", items: [
+    { name: "Sinupret", days: 7 },
+    { name: "Strepsils", days: 5 },
+    { name: "Biseptol spray", days: 5 }
+  ]},
+  { section: "Seara", items: [
+    { name: "Biofen", days: 3 },
+    { name: "Sinupret", days: 7 },
+    { name: "Strepsils", days: 5 },
+    { name: "Biseptol spray", days: 5 }
+  ]},
+  { section: "22:30", items: [
+    { name: "Augmentin", days: 10 },
+    { name: "Biseptol spray", days: 5 }
+  ]}
+];
+
+let currentDay = Number(localStorage.getItem("currentDay") || 1);
+
+function key(day, section, name, index) {
+  return `tratament-z${day}-${section}-${name}-${index}`;
+}
+
+function colorClass(days) {
+  if (days === 10) return "d10";
+  if (days === 7) return "d7";
+  if (days === 5) return "d5";
+  return "d3";
+}
+
+function renderDays() {
+  const el = document.getElementById("days");
+  el.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    const b = document.createElement("button");
+    b.className = "day-btn" + (i === currentDay ? " active" : "");
+    b.textContent = "Zi " + i;
+    b.onclick = () => {
+      currentDay = i;
+      localStorage.setItem("currentDay", i);
+      render();
+    };
+    el.appendChild(b);
+  }
+}
+
+function renderContent() {
+  const content = document.getElementById("content");
+  content.innerHTML = "";
+
+  treatment.forEach(group => {
+    const section = document.createElement("div");
+    section.className = "section";
+    section.innerHTML = `<div class="section-title">${group.section}</div>`;
+
+    group.items.forEach((item, idx) => {
+      const active = currentDay <= item.days;
+      const id = key(currentDay, group.section, item.name, idx);
+      const checked = localStorage.getItem(id) === "true";
+
+      const row = document.createElement("label");
+      row.className = "item" + (!active ? " disabled" : "") + (checked ? " done" : "");
+      row.innerHTML = `
+        <input type="checkbox" ${checked ? "checked" : ""} ${!active ? "disabled" : ""}>
+        <span class="name">${item.name}</span>
+        <span class="pill ${colorClass(item.days)}">${item.days} zile</span>
+      `;
+      const cb = row.querySelector("input");
+      cb.onchange = () => {
+        localStorage.setItem(id, cb.checked);
+        renderProgress();
+        row.classList.toggle("done", cb.checked);
+      };
+      section.appendChild(row);
+    });
+    content.appendChild(section);
+  });
+}
+
+function activeItemsForDay(day = currentDay) {
+  let arr = [];
+  treatment.forEach(group => {
+    group.items.forEach((item, idx) => {
+      if (day <= item.days) arr.push({ group: group.section, item, idx });
+    });
+  });
+  return arr;
+}
+
+function renderProgress() {
+  const active = activeItemsForDay();
+  const done = active.filter(x => localStorage.getItem(key(currentDay, x.group, x.item.name, x.idx)) === "true").length;
+  const pct = active.length ? Math.round(done / active.length * 100) : 100;
+  document.getElementById("bar").style.width = pct + "%";
+  document.getElementById("progressText").textContent = `Ziua ${currentDay}: ${done}/${active.length} bifate`;
+}
+
+function resetDay() {
+  if (!confirm("Sigur resetezi bifele pentru ziua aceasta?")) return;
+  activeItemsForDay().forEach(x => localStorage.removeItem(key(currentDay, x.group, x.item.name, x.idx)));
+  render();
+}
+
+function copyStatus() {
+  const lines = [`Status tratament - Ziua ${currentDay}`];
+  treatment.forEach(group => {
+    lines.push(`\n${group.section}`);
+    group.items.forEach((item, idx) => {
+      if (currentDay <= item.days) {
+        const checked = localStorage.getItem(key(currentDay, group.section, item.name, idx)) === "true";
+        lines.push(`${checked ? "✅" : "⬜"} ${item.name}`);
+      }
+    });
+  });
+  navigator.clipboard.writeText(lines.join("\n")).then(() => alert("Status copiat."));
+}
+
+function render() {
+  renderDays();
+  renderContent();
+  renderProgress();
+}
+
+render();
+</script>
+</body>
+</html>
